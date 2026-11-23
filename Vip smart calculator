@@ -1,0 +1,117 @@
+
+from kivy.app import App
+from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.gridlayout import GridLayout
+from kivy.uix.button import Button
+from kivy.uix.label import Label
+from kivy.metrics import dp, sp
+from kivy.core.window import Window
+
+
+class SmartCalculator(App):
+
+    def build(self):
+        Window.clearcolor = (0.12, 0.12, 0.12, 1)
+
+        self.expression = ""
+
+        main = BoxLayout(
+            orientation="vertical",
+            padding=dp(5),
+            spacing=dp(5)
+        )
+
+        self.display = Label(
+            text="0",
+            font_size=sp(55),
+            halign="right",
+            valign="middle",
+            color=(1, 1, 1, 1),
+            size_hint=(1, 0.25)
+        )
+        self.display.bind(
+            size=lambda obj, size:
+            setattr(obj, "text_size", size)
+        )
+
+        main.add_widget(self.display)
+
+        buttons = [
+            ["C", "DEL", "%", "/"],
+            ["7", "8", "9", "*"],
+            ["4", "5", "6", "-"],
+            ["1", "2", "3", "+"],
+            ["0", ".", "="]
+        ]
+
+        grid = GridLayout(
+            cols=4,
+            spacing=dp(5)
+        )
+
+        for row in buttons:
+            for item in row:
+
+                color = (
+                    (1, 0.55, 0, 1)
+                    if item in ["/", "*", "-", "+", "="]
+                    else (0.20, 0.20, 0.20, 1)
+                )
+
+                btn = Button(
+                    text=item,
+                    font_size=sp(30),
+                    background_normal="",
+                    background_color=color,
+                    color=(1, 1, 1, 1)
+                )
+
+                btn.bind(
+                    on_press=lambda instance,
+                    value=item: self.click(value)
+                )
+
+                grid.add_widget(btn)
+
+        main.add_widget(grid)
+        return main
+
+    def click(self, value):
+
+        if value == "C":
+            self.expression = ""
+
+        elif value == "DEL":
+            self.expression = self.expression[:-1]
+
+        elif value == "=":
+            try:
+                if not self.expression:
+                    return
+
+                allowed = "0123456789+-*/.()% "
+                if any(c not in allowed for c in self.expression):
+                    raise ValueError
+
+                result = eval(
+                    self.expression.replace("%", "/100"),
+                    {"__builtins__": {}},
+                    {}
+                )
+
+                self.expression = str(result)
+
+            except Exception:
+                self.expression = "Error"
+
+        else:
+            if self.expression == "Error":
+                self.expression = ""
+
+            self.expression += value
+
+        self.display.text = self.expression or "0"
+
+
+if __name__ == "__main__":
+    SmartCalculator().run()
